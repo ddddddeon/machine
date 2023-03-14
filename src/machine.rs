@@ -44,16 +44,13 @@ impl Machine {
     ) -> Result<(), Box<dyn Error>> {
         match tokens.len() {
             3 => {
-                let num1: i64;
-                let num2: i64;
-
-                num1 = match tokens[1].as_str() {
+                let num1 = match tokens[1].as_str() {
                     "r1" => self.r1.get(),
                     "r2" => self.r2.get(),
                     &_ => tokens[1].parse()?,
                 };
 
-                num2 = match tokens[2].as_str() {
+                let num2 = match tokens[2].as_str() {
                     "r1" => self.r1.get(),
                     "r2" => self.r2.get(),
                     &_ => tokens[2].parse()?,
@@ -82,7 +79,7 @@ impl Machine {
 
                 Ok(())
             }
-            _ => return Err("mul must have two operands".into()),
+            _ => Err("mul must have two operands".into()),
         }
     }
 
@@ -139,24 +136,19 @@ impl Machine {
             }
             "mov" => match tokens.len() {
                 3 => {
-                    let num: i64;
-                    match tokens[2].as_str() {
-                        "r1" => num = self.r1.get(),
-                        "r2" => num = self.r2.get(),
-                        "pop" => {
-                            num = match self.stack.pop() {
-                                Some(n) => n,
-                                None => return Err("Stack is empty".into()),
-                            }
-                        }
-                        "peek" => {
-                            num = match self.stack.peek() {
-                                Some(n) => *n,
-                                None => return Err("Stack is empty".into()),
-                            }
-                        }
-                        &_ => num = tokens[2].parse()?,
-                    }
+                    let num: i64 = match tokens[2].as_str() {
+                        "r1" => self.r1.get(),
+                        "r2" => self.r2.get(),
+                        "pop" => match self.stack.pop() {
+                            Some(n) => n,
+                            None => return Err("Stack is empty".into()),
+                        },
+                        "peek" => match self.stack.peek() {
+                            Some(n) => *n,
+                            None => return Err("Stack is empty".into()),
+                        },
+                        &_ => tokens[2].parse()?,
+                    };
 
                     match tokens[1].as_str() {
                         "r1" => {
