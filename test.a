@@ -1,0 +1,12 @@
+mov r1 3
+mov r2 2
+xor r1 r2
+pop
+push 32
+push 23
+mov r1 pop
+mov r2 pop
+mul r1 r2
+mul r1 pop
+xor r1 r1
+mov r1 pop

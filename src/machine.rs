@@ -1,10 +1,10 @@
 use crate::register::Register;
 use crate::stack::Stack;
-
 use std::{
     default::Default,
     error::Error,
-    io::{self, Write},
+    fs::File,
+    io::{self, BufRead, BufReader, Write},
 };
 
 type Tokens = Vec<String>;
@@ -44,15 +44,32 @@ impl Machine {
     ) -> Result<(), Box<dyn Error>> {
         match tokens.len() {
             3 => {
+                // TODO DRY
                 let num1 = match tokens[1].as_str() {
                     "r1" => self.r1.get(),
                     "r2" => self.r2.get(),
+                    "pop" => match self.stack.pop() {
+                        Some(n) => n,
+                        None => return Err("Stack is empty".into()),
+                    },
+                    "peek" => match self.stack.peek() {
+                        Some(n) => *n,
+                        None => return Err("Stack is empty".into()),
+                    },
                     &_ => tokens[1].parse()?,
                 };
 
                 let num2 = match tokens[2].as_str() {
                     "r1" => self.r1.get(),
                     "r2" => self.r2.get(),
+                    "pop" => match self.stack.pop() {
+                        Some(n) => n,
+                        None => return Err("Stack is empty".into()),
+                    },
+                    "peek" => match self.stack.peek() {
+                        Some(n) => *n,
+                        None => return Err("Stack is empty".into()),
+                    },
                     &_ => tokens[2].parse()?,
                 };
 
@@ -84,19 +101,32 @@ impl Machine {
     }
 
     pub fn run(&mut self) -> Result<(), Box<dyn Error>> {
-        let mut input = String::new();
-        loop {
-            print!("> ");
-            io::stdout().flush()?;
-            io::stdin().read_line(&mut input)?;
+        let filename = "test.a";
+        let file = File::open(filename)?;
+        let reader = BufReader::new(file);
 
-            let tokens: Tokens = input.split_whitespace().map(str::to_string).collect();
+        for (_, line) in reader.lines().enumerate() {
+            let tokens: Tokens = line?.split_whitespace().map(str::to_string).collect();
+
             if let Err(e) = self.parse(tokens) {
                 println!("[ERR] {}", e);
             }
-
-            input.clear();
         }
+        Ok(())
+
+        //let mut input = String::new();
+        //         loop {
+        //             print!("> ");
+        //             io::stdout().flush()?;
+        //             io::stdin().read_line(&mut input)?;
+
+        //             let tokens: Tokens = input.split_whitespace().map(str::to_string).collect();
+        //         if let Err(e) = self.parse(tokens) {
+        //             println!("[ERR] {}", e);
+        //         }
+
+        //             input.clear();
+        //         }
     }
 
     fn parse(&mut self, tokens: Vec<String>) -> Result<(), Box<dyn Error>> {
@@ -110,12 +140,11 @@ impl Machine {
             }
             "push" => match tokens.len() {
                 2 => {
-                    let num: i64;
-                    match tokens[1].as_str() {
-                        "r1" => num = self.r1.get(),
-                        "r2" => num = self.r2.get(),
-                        &_ => num = tokens[1].parse()?,
-                    }
+                    let num: i64 = match tokens[1].as_str() {
+                        "r1" => self.r1.get(),
+                        "r2" => self.r2.get(),
+                        &_ => tokens[1].parse()?,
+                    };
 
                     self.stack.push(num);
                     if let Some(peeked) = self.stack.peek() {
